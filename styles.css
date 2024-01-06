@@ -1,16 +1,19 @@
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
 }
 
 body {
-  margin: 0;
-  padding: 0;
+  background-color: #f4f4f4;
+  color: #333;
 }
 
 .navbar {
-  border-bottom: 1px solid black;
+  background-color: #333;
+  color: #f4f4f4;
   padding: 15px;
-  margin-bottom: 0;
   text-align: center;
 }
 
@@ -18,49 +21,32 @@ body {
   font-size: 40px;
 }
 
-.scoreboard {
+#scoreboard {
   max-width: 295px;
-  margin: 30px auto;  /* used to horizontally center an element within its parent container. 0 means no margin at the top or bottom of the element. Auto is used for the left and right margins, and it tells the browser to distribute the horizontal space evenly between the left and right margins; centering the element horizontally within its parent container. */
+  margin: 30px auto;
   width: 100%;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  row-gap: 20px;
-  column-gap: 20px;
+  gap: 20px;
   justify-content: center;
-  align-content: center;  /* Aligns entire content of a container along the cross-axis. It affects spacing between rows or columns of items when there is extra space in the container. */
+  align-content: center;
 }
 
 .scoreboard-letter {
-  border: 1px solid black;
+  border: 1px solid #333;
   height: 45px;
   width: 50px;
   font-size: 30px;
   font-weight: bold;
   display: flex;
-  align-items: center;  /* aligns child elements within a container along the cross-axis */
+  align-items: center;
   justify-content: center;
+  background-color: #fff;
+  box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.75);
 }
 
-.alert-enter-valid-letter{
-  font-size: 20px;
-  display: flex;
-  justify-content: center;
-  background-color: yellow;
-  padding: 15px;
-  visibility: hidden;
-}
-
-.correct {
-  background-color: green;
-  color: white;
-}
-
-.close {
-  background-color: orange;
-  color: white;
-}
-
-.wrong {
-  background-color: gray;
-  color: white;
+#result {
+  font-size: 2em;
+  text-align: center;
+  margin-top: 20px;
 }

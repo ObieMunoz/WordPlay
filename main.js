@@ -1,25 +1,40 @@
-// TODO
-// game isn't checking for a win when backspace is used (need to clear things out somehow, or get the new currentPosition from the backspace function)
+document.addEventListener("keydown", handleKeyDown);
+document.addEventListener("DOMContentLoaded", () => { init(); });
 
-// prevent the option key from showing up in the alertElement when opening devtools
+const BOARD_HEIGHT = 6;
+const BOARD_WIDTH = 5;
 
-// declare variables
-const numberOfRows = 6;
-
-// select the HTML elements and assign to variables
-const lettersContainer = document.querySelector(".scoreboard-letter");
-
-// create an Array (with a length the same as numberOfRows) for storing the user's guesses
-const rows = Array.from({ length: numberOfRows }, () => []);
-
-let currentPosition = 0;
-let currentRow = 0;
-let gameOver = false;
+let currentWord;
 let wordOfTheDay;
-let defaultWordOfTheDay = "abase";
+let gameOver = false;
+let currentRow = 0;
+let letters;
 
-// fetch word of the day
+async function init() {
+  wordOfTheDay = await fetchWordOfTheDay();
+  createBoard(BOARD_HEIGHT, BOARD_WIDTH);
+}
+
+function createBoard(height, width) {
+  const SCOREBOARD_CONTAINER = document.getElementById('scoreboard');
+  for (let i = 1; i <= height * width; i++) {
+    const letter = document.createElement('div');
+    letter.className = 'scoreboard-letter';
+    letter.id = `letter-${i}`;
+    SCOREBOARD_CONTAINER.appendChild(letter);
+  }
+
+  const inputElement = document.createElement('input');
+  inputElement.type = 'text';
+  inputElement.id = 'user-input';
+  inputElement.style.visibility = 'hidden';
+  inputElement.maxLength = width;
+  document.body.appendChild(inputElement);
+}
+
 async function fetchWordOfTheDay() {
+  let word = ["apple", "beach", "candy", "drama", "eager", "faith", "ghost", "happy", "igloo", "jolly"][Math.floor(Math.random() * 10)];
+
   try {
     const response = await fetch(
       "https://words.dev-apis.com/word-of-the-day?random=1"
@@ -28,141 +43,80 @@ async function fetchWordOfTheDay() {
       throw new Error(`Error fetching data: ${response.status}`);
     }
     const data = await response.json();
-    wordOfTheDay = data.word;
-    console.log(wordOfTheDay);
-    return wordOfTheDay;
+    word = data.word;
   } catch (error) {
     console.error(error);
-    wordOfTheDay = defaultWordOfTheDay;
-    console.log(
-      `Word of the day wasn't available. Using default: ${wordOfTheDay}`
-    );
+    console.warn("Using a default random word instead.")
   }
+  console.log(`Word of the day: ${word}`);
+  return word;
 }
 
-// a function that takes in the keyboard event as a parameter and extracts the key that was pressed.
 function handleKeyDown(event) {
-  const letterCode = event.code;
-  const alertElement = document.querySelector(".alert-enter-valid-letter");
-
-  // hide the alert initially
-  alertElement.style.visibility = "hidden";
-
-  if (
-    letterCode === "MetaLeft" ||
-    (letterCode === "AltLeft" && letterCode === "KeyJ")
-  ) {
-    console.log("Devtools Opened");
-  } else if (letterCode === "Backspace") {
-    handleBackspace();
-    // clear alert message if Backspace is pressed
-    alertElement.textContent = "";
-    alertElement.style.visibility = "hidden";
-  } else if (letterCode >= "KeyA" && letterCode <= "KeyZ") {
-    // extract the letter and play the game
-    const letter = event.key.toLowerCase();
-    playTheGame(letter);
-
-    // make sure alert message is cleared when a correct letter is entered
-    alertElement.textContent = "";
-    alertElement.style.visibility = "hidden";
-  } else {
-    alertElement.textContent = "Please enter a valid letter: a - z";
-    alertElement.style.visibility = "visible";
-  }
-}
-
-function handleBackspace() {
-  // check if there is a letter to delete first
-  if (currentPosition > 0) {
-    // decrement currentPosition
-    currentPosition--;
-
-    // grab the previous letter element based on the updated currentPosition
-    const previousLetterElement = document.getElementById(
-      `letter-${currentPosition}`
-    );
-    // clear contents of previous letter element
-    previousLetterElement.textContent = "";
-    previousLetterElement.style.backgroundColor = "";
-
-    console.log(`Backspace Position: ${currentPosition}`);
-
-    checkIfUserWins();
-  }
-}
-
-// a function for the game's primary logic
-function playTheGame(letter) {
-  // check to see if game can be played
   if (gameOver) {
     return;
   }
 
-  const lowercaseLetter = letter.toLowerCase();
+  const letter = event.key;
+  const inputElement = document.getElementById('user-input');
 
-  if (lowercaseLetter >= "a" && lowercaseLetter <= "z") {
-    // get the current letter element based on the currentPosition
-    const currentLetterElement = document.getElementById(
-      `letter-${currentPosition}`
-    );
-
-    // add letter to UI
-    currentLetterElement.textContent = lowercaseLetter;
-
-    // add (push) the letter to the current row
-    rows[currentRow].push(lowercaseLetter);
-    console.log(rows);
-
-    // check if user's letter is in wordOfTheDay. If true, change background to green
-    const letterInWordOfDay = wordOfTheDay.includes(lowercaseLetter);
-
-    if (letterInWordOfDay) {
-      currentLetterElement.style.backgroundColor = "green";
+  if (letter.match(/^[A-Za-z]$/) && inputElement.value.length < 5) {
+    inputElement.value += letter;
+    const cellId = currentRow * 5 + inputElement.value.length;
+    const cell = document.getElementById(`letter-${cellId}`);
+    if (cell) {
+      cell.textContent = letter;
     }
-
-    // increment current position
-    currentPosition++;
-
-    if (currentPosition % 5 === 0) {
-      checkIfUserWins();
-
-      console.log(
-        `Current Position: ${currentPosition}, Current Row: ${currentRow} of ${numberOfRows}`
-      );
+  } else if (event.keyCode === 8 || event.which === 8) {
+    inputElement.value = inputElement.value.slice(0, -1);
+    const cellId = currentRow * 5 + inputElement.value.length + 1;
+    const cell = document.getElementById(`letter-${cellId}`);
+    if (cell) {
+      cell.textContent = '';
+      cell.style.backgroundColor = '';
     }
+  }
+
+  if (inputElement.value.length === 5) {
+    checkWord(inputElement.value);
+    inputElement.value = '';
+    currentRow = currentRow === 5 ? 0 : currentRow + 1;
   }
 }
 
-function checkIfUserWins() {
-  // join the letters to form the user's word
-  const userWord = rows[currentRow].join("");
-  console.log(userWord);
+function displayResult(message) {
+  const resultElement = document.createElement('div');
+  resultElement.id = 'result';
+  resultElement.textContent = message;
+  resultElement.style.fontSize = '2em';
+  resultElement.style.textAlign = 'center';
+  document.body.appendChild(resultElement);
+}
 
-  if (userWord === wordOfTheDay) {
-    setTimeout(() => {
-      alert(`You win, from checkIfUserWins()`);
-      // set flag to true when user loses the game
-      gameOver = true;
-    }, 50);
-  } else if (currentPosition === numberOfRows * 5) {
-    setTimeout(() => {
-      alert(`You lose!`);
-      gameOver = true;
-    }, 50);
-  } else {
-    // Move to the next row
-    currentRow++;
+function checkWord(word) {
+  updateColor(word);
+
+  if (word.toLowerCase() === wordOfTheDay.toLowerCase()) {
+    gameOver = true;
+    displayResult('You won!');
+  } else if (currentRow === 5) {
+    gameOver = true;
+    displayResult('You lost!');
   }
 }
 
-async function init() {
-  console.log(`init() called`);
-  // fetch word of the day using await
-  wordOfTheDay = await fetchWordOfTheDay();
-
-  // add event listener and call handleKeyDown
-  document.addEventListener("keydown", (event) => handleKeyDown(event));
+function updateColor(word) {
+  for (let i = 0; i < word.length; i++) {
+    const cellId = currentRow * 5 + i + 1;
+    const cell = document.getElementById(`letter-${cellId}`);
+    if (cell) {
+      if (word[i].toLowerCase() === wordOfTheDay[i].toLowerCase()) {
+        cell.style.backgroundColor = 'green';
+      } else if (wordOfTheDay.toLowerCase().includes(word[i].toLowerCase())) {
+        cell.style.backgroundColor = 'yellow';
+      } else {
+        cell.style.backgroundColor = '';
+      }
+    }
+  }
 }
-
-init();
