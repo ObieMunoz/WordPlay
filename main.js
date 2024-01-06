@@ -85,12 +85,10 @@ function handleKeyDown(event) {
 }
 
 function displayResult(message) {
-  const resultElement = document.createElement('div');
-  resultElement.id = 'result';
+  const resultElement = document.getElementById('result');
   resultElement.textContent = message;
   resultElement.style.fontSize = '2em';
   resultElement.style.textAlign = 'center';
-  document.body.appendChild(resultElement);
 }
 
 function checkWord(word) {
